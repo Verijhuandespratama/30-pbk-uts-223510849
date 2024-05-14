@@ -27,8 +27,9 @@ body {
   display:block;
   min-width: 420px;
   min-height: 100vh;
-  background-image: url('./src/assets/bg1.jpg'); 
-  background-size: contain;
+  background-image: url(https://i.pinimg.com/564x/a1/fa/2e/a1fa2edce3a350efb53bb9634917dea9.jpg); 
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 h1 {

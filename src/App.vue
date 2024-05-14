@@ -1,22 +1,54 @@
 <template>
   <div class="app">
-    <h1>List Kunjungan Wisata</h1>
-    <div class="add-todo">
-      <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Tambahkan tempat wisata">
-      <button @click="addTodo">Tambah</button>
+    <header>
+      <nav>
+        <ul>
+          <li><a href="#" @click="setActive('todos')">Todos</a></li>
+          <li><a href="#" @click="setActive('posts')">Post</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <div v-if="activeSection === 'todos'">
+      <h1>List Kunjungan Wisata</h1>
+      <div class="add-todo">
+        <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Tambahkan tempat wisata">
+        <button @click="addTodo">Tambah</button>
+      </div>
+      <div class="filters">
+        <label>
+          <input type="checkbox" v-model="showIncomplete"> Tampilkan tempat yang belum di kunjungi
+        </label>
+      </div>
+      <ul class="todos">
+        <li v-for="(todo, index) in filteredTodos" :key="index" :class="{ 'completed': todo.completed }">
+          <input type="checkbox" v-model="todo.completed">
+          <span @click="toggleCompletion(todo)" :class="{ 'completed-text': todo.completed }">{{ todo.text }}</span>
+          <button @click="removeTodo(index)">Hapus</button>
+        </li>
+      </ul>
     </div>
-    <div class="filters">
-      <label>
-        <input type="checkbox" v-model="showIncomplete"> Tampilkan tempat yang belum di kunjungi
-      </label>
+
+    <div v-else>
+      <h1>Posts</h1>
+      <div class="filters">
+        <label>
+          Filter by user:
+          <select v-model="selectedUser" @change="fetchPostsByUser">
+            <option value="">--Plih User--</option>
+            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+          </select>
+        </label>
+      </div>
+      <ul class="posts">
+        <li v-if="posts.length === 0">Please select a user to see posts.</li>
+        <li v-for="post in filteredPosts" :key="post.id">
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.body }}</p>
+          <small>Author: {{ getAuthorName(post.userId) }}</small>
+        </li>
+      </ul>
     </div>
-    <ul class="todos">
-      <li v-for="(todo, index) in filteredTodos" :key="index" :class="{ 'completed': todo.completed }">
-        <input type="checkbox" v-model="todo.completed">
-        <span @click="toggleCompletion(todo)" :class="{ 'completed-text': todo.completed }">{{ todo.text }}</span>
-        <button @click="removeTodo(index)">Hapus</button>
-      </li>
-    </ul>
   </div>
 </template>
 
@@ -26,7 +58,11 @@ export default {
     return {
       newTodo: '',
       showIncomplete: false,
-      todos: []
+      todos: [],
+      activeSection: 'todos',
+      posts: [],
+      users: [],
+      selectedUser: ''
     };
   },
   computed: {
@@ -35,6 +71,13 @@ export default {
         return this.todos.filter(todo => !todo.completed);
       } else {
         return this.todos;
+      }
+    },
+    filteredPosts() {
+      if (this.selectedUser) {
+        return this.posts.filter(post => post.userId === parseInt(this.selectedUser));
+      } else {
+        return this.posts;
       }
     }
   },
@@ -50,17 +93,68 @@ export default {
     },
     toggleCompletion(todo) {
       todo.completed = !todo.completed;
+    },
+    setActive(section) {
+      this.activeSection = section;
+      if (section === 'posts' && this.users.length === 0) {
+        this.fetchUsers();
+      }
+    },
+    fetchUsers() {
+      fetch('https://jsonplaceholder.typicode.com/users')
+        .then(response => response.json())
+        .then(users => {
+          this.users = users;
+        })
+        .catch(error => console.error('Error fetching users:', error));
+    },
+    fetchPostsByUser() {
+      if (this.selectedUser) {
+        fetch(`https://jsonplaceholder.typicode.com/posts?userId=${this.selectedUser}`)
+          .then(response => response.json())
+          .then(posts => {
+            this.posts = posts;
+          })
+          .catch(error => console.error('Error fetching posts:', error));
+      } else {
+        this.posts = [];
+      }
+    },
+    getAuthorName(userId) {
+      const user = this.users.find(user => user.id === userId);
+      return user ? user.name : 'Unknown';
     }
   }
 };
 </script>
 
 <style scoped>
-.app {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+
+
+header {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+nav{
+  background-color: aqua;
+
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+}
+
+nav ul li {
+  margin-right: 20px;
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: #000;
 }
 
 .add-todo input {
@@ -91,5 +185,22 @@ export default {
 
 .completed-text {
   padding-left: 5px;
+}
+
+.posts ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.posts li {
+  margin-top: 10px;
+}
+
+.posts h3 {
+  margin: 0;
+}
+
+.posts p {
+  margin: 5px 0;
 }
 </style>
