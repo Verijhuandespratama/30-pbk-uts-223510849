@@ -10,23 +10,12 @@
     </header>
 
     <div v-if="activeSection === 'todos'">
-      <h1>List Kunjungan Wisata</h1>
-      <div class="add-todo">
-        <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Tambahkan tempat wisata">
-        <button @click="addTodo">Tambah</button>
-      </div>
-      <div class="filters">
-        <label>
-          <input type="checkbox" v-model="showIncomplete"> Tampilkan tempat yang belum di kunjungi
-        </label>
-      </div>
-      <ul class="todos">
-        <li v-for="(todo, index) in filteredTodos" :key="index" :class="{ 'completed': todo.completed }">
-          <input type="checkbox" v-model="todo.completed">
-          <span @click="toggleCompletion(todo)" :class="{ 'completed-text': todo.completed }">{{ todo.text }}</span>
-          <button @click="removeTodo(index)">Hapus</button>
-        </li>
-      </ul>
+      <TodoList 
+        :todos="todos" 
+        @add-todo="addTodo" 
+        @remove-todo="removeTodo" 
+        @toggle-completion="toggleCompletion" 
+      />
     </div>
 
     <div v-else>
@@ -53,11 +42,14 @@
 </template>
 
 <script>
+import TodoList from './TodoList.vue';
+
 export default {
+  components: {
+    TodoList
+  },
   data() {
     return {
-      newTodo: '',
-      showIncomplete: false,
       todos: [],
       activeSection: 'todos',
       posts: [],
@@ -66,13 +58,6 @@ export default {
     };
   },
   computed: {
-    filteredTodos() {
-      if (this.showIncomplete) {
-        return this.todos.filter(todo => !todo.completed);
-      } else {
-        return this.todos;
-      }
-    },
     filteredPosts() {
       if (this.selectedUser) {
         return this.posts.filter(post => post.userId === parseInt(this.selectedUser));
@@ -82,11 +67,8 @@ export default {
     }
   },
   methods: {
-    addTodo() {
-      if (this.newTodo.trim() !== '') {
-        this.todos.push({ text: this.newTodo, completed: false });
-        this.newTodo = '';
-      }
+    addTodo(newTodo) {
+      this.todos.push({ text: newTodo, completed: false });
     },
     removeTodo(index) {
       this.todos.splice(index, 1);
